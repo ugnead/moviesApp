@@ -1,68 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import MovieBox from "../MovieBox/MovieBox";
 import MovieInfo from "../MovieInfo/MovieInfo";
 import MovieListCSS from "./MovieList.module.css";
 
-function MovieList() {
-    const [movies, setMovies] = useState([
-        {
-            id: 1,
-            movieImage:
-                "https://static3.go3.tv/scale/go3/webuploads/rest/upload/vod/5010385/images/19307744?dsth=1080&dstw=1920&srcmode=0&quality=65&type=1&srcx=1&srcy=1&srcw=1/1&srch=1/1",
-            movieTitle: "Armagedonas",
-        },
-        {
-            id: 2,
-            movieImage:
-                "https://wallpaper_finder.s3.amazonaws.com/wallpapers/thumbs_2/titanic-movie-poster.jpg",
-            movieTitle: "Titanikas",
-        },
-        {
-            id: 3,
-            movieImage:
-                "https://static3.go3.tv/scale/go3/webuploads/rest/upload/vod/5010385/images/19307744?dsth=1080&dstw=1920&srcmode=0&quality=65&type=1&srcx=1&srcy=1&srcw=1/1&srch=1/1",
-            movieTitle: "Armagedonas",
-        },
-        {
-            id: 4,
-            movieImage:
-                "https://static3.go3.tv/scale/go3/webuploads/rest/upload/vod/5010385/images/19307744?dsth=1080&dstw=1920&srcmode=0&quality=65&type=1&srcx=1&srcy=1&srcw=1/1&srch=1/1",
-            movieTitle: "Armagedonas",
-        },
-        {
-            id: 5,
-            movieImage:
-                "https://static3.go3.tv/scale/go3/webuploads/rest/upload/vod/5010385/images/19307744?dsth=1080&dstw=1920&srcmode=0&quality=65&type=1&srcx=1&srcy=1&srcw=1/1&srch=1/1",
-            movieTitle: "Armagedonas",
-        },
-        {
-            id: 6,
-            movieImage:
-                "https://static3.go3.tv/scale/go3/webuploads/rest/upload/vod/5010385/images/19307744?dsth=1080&dstw=1920&srcmode=0&quality=65&type=1&srcx=1&srcy=1&srcw=1/1&srch=1/1",
-            movieTitle: "Armagedonas",
-        },
-        {
-            id: 7,
-            movieImage:
-                "https://static3.go3.tv/scale/go3/webuploads/rest/upload/vod/5010385/images/19307744?dsth=1080&dstw=1920&srcmode=0&quality=65&type=1&srcx=1&srcy=1&srcw=1/1&srch=1/1",
-            movieTitle: "Armagedonas",
-        },
-    ]);
+const url = "http://localhost:4000/api/v1/movies/";
 
+function MovieList() {
+    const [movies, setMovies] = useState([]);
+    // const [moviesList, setMoviesList] = useState([]);
     const [selectedMovie, setSelectedMovie] = useState([]);
 
-    const handleMovieBoxClick = (id) => {
-        const selectedMovie = movies.find((movie) => movie.id === parseInt(id));
-        setSelectedMovie(selectedMovie);
+    useEffect(() => {
+        fetchMovies();
+    }, []);
+
+    const fetchMovies = async () => {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error("Failed to fetch movies");
+            }
+            const data = await response.json();
+            setMovies(data.data.movies);
+            setSelectedMovie(data.data.movies[0]);
+        } catch (error) {
+            console.error("Error fetching movies:", error);
+        }
     };
-    
+
+    const handleMovieBoxClick = (id) => {
+        const selectedMovie = movies.find((movie) => movie._id === id || movie[0]);
+        setSelectedMovie(selectedMovie);
+        console.log(selectedMovie);
+    };
 
     let allMovies = movies.map((movie) => {
         return (
             <MovieBox
                 key={uuidv4()}
-                id={movie.id}
+                id={movie._id}
                 image={movie.movieImage}
                 title={movie.movieTitle}
                 handleMovieBoxClick={handleMovieBoxClick}
@@ -75,8 +52,56 @@ function MovieList() {
             <MovieInfo
                 image={selectedMovie.movieImage}
                 title={selectedMovie.movieTitle}
+                releaseYear={selectedMovie.releaseYear}
+                genre={selectedMovie.movieGenre}
+                rating={selectedMovie.movieRating}
             />
-            <div className={`d-flex align-items-end mb-4 ${MovieListCSS.movieList}`}>{allMovies}</div>
+            <div className={`d-flex ${MovieListCSS.movieSearch}`}>
+                <div className="dropdown me-4">
+                    <button
+                        className="btn btn-outline-primary dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                    >
+                        Filtruoti
+                    </button>
+                    <ul className="dropdown-menu">
+                        <li>
+                            <a className="dropdown-item" href="#">
+                                Pavadinimas A-Z
+                            </a>
+                        </li>
+                        <li>
+                            <a className="dropdown-item" href="#">
+                                Pavadinimas Z-A
+                            </a>
+                        </li>
+                        <li>
+                            <a className="dropdown-item" href="#">
+                                Išjungti filtravimą
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <form className="d-flex" role="search">
+                    <input
+                        className="form-control me-2"
+                        type="search"
+                        placeholder="Armagedonas"
+                        aria-label="Search"
+                    />
+                    <button className="btn btn-outline-danger" type="submit">
+                        Ieškoti
+                    </button>
+                </form>
+            </div>
+
+            <div
+                className={`d-flex align-items-end mb-3 ${MovieListCSS.movieList}`}
+            >
+                {allMovies}
+            </div>
         </>
     );
 }
