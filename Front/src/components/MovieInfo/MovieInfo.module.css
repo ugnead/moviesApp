@@ -3,3 +3,9 @@
     height: 40vh;
     object-fit: cover;
 }
+
+.Error-msg{
+    color:#f26969;
+    margin-top: -10px;
+    margin-left: 25px;
+}

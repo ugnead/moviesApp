@@ -4,6 +4,16 @@
     left: 0;
 }
 
+.addMovieBtn {
+    height: 140px;
+    width: 140px;
+    background-color: #141414;
+    border: 6px solid rgb(96, 96, 96);
+    border-radius: 5px;
+    font-size: 75px;
+    color: rgb(96, 96, 96);
+}
+
 .movieSearch {
     position: fixed;
     bottom: 200px;
