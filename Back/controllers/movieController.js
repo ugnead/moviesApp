@@ -1,13 +1,14 @@
 const { Movie } = require("../models/movieModel");
 
-exports.getAllMovies = async (req, res) => {
+exports.getMoviesByUsername = async (req, res) => {
     try {
-        const allMovies = await Movie.find();
+        const username = req.params.username;
+        const movies  = await Movie.find({ username});
         res.status(200).json({
             status: "success",
-            results: allMovies.length,
+            results: movies.length,
             data: {
-                movies: allMovies,
+                movies,
             },
         });
     } catch (err) {
@@ -24,8 +25,7 @@ exports.getMovieById = async (req, res) => {
     try {
         const { id } = req.params;
         const movie = await Movie.findOne({ _id: id });
-        console.log(movie);
-
+        
         if (!movie) {
             return res.status(404).json({ msg: `No movie with id: ${id}` });
         } else {
@@ -49,7 +49,9 @@ exports.getMovieById = async (req, res) => {
 // app.post("/api/v1/movies",
 exports.createNewMovie = async (req, res) => {
     try {
-        const newMovie = await Movie.create(req.body);
+        const {username} = req.body;
+        const movieData = { ...req.body, username };
+        const newMovie = await Movie.create(movieData);
         res.status(201).json({
             status: "success",
             data: {

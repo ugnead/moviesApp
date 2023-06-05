@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import MovieBox from "../MovieBox/MovieBox";
 import MovieInfo from "../MovieInfo/MovieInfo";
 import MovieListCSS from "./MovieList.module.css";
+import { UserContext } from "../../UserContext";
 
 const url = "http://localhost:4000/api/v1/movies/";
 
-function MovieList(props) {
-    const [movies, setMovies] = useState("");
+function MovieList() {
+    const { username } = useContext(UserContext);
+
     const [movieList, setMovieList] = useState([]);
-    const [selectedMovie, setSelectedMovie] = useState([]);
+    const [selectedMovie, setSelectedMovie] = useState({});
 
     const [imageInput, setImageInput] = useState("");
     const [titleInput, setTitleInput] = useState("");
@@ -22,19 +24,23 @@ function MovieList(props) {
 
     const [error, setError] = useState(false);
 
+    const movieListRef = useRef(null);
+
     useEffect(() => {
         fetchMovies();
-    }, []);
+    }, [username]);
 
     const fetchMovies = async () => {
         try {
-            const response = await fetch(url);
+            const token = localStorage.getItem("token");
+            const response = await fetch(url + `user/${username}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch movies");
             }
             const data = await response.json();
-            setMovieList(data.data.movies.reverse());
-            setSelectedMovie(data.data.movies[0]);
+            const movies = data.data.movies || [];
+            setMovieList(movies.reverse());
+            setSelectedMovie(movies[0] || {});
         } catch (error) {
             console.error("Error fetching movies:", error);
         }
@@ -43,7 +49,6 @@ function MovieList(props) {
     const handleMovieBoxClick = (movieId) => {
         const selectedMovie = movieList.find((movie) => movie._id === movieId);
         setSelectedMovie(selectedMovie);
-        console.log(selectedMovie);
     };
 
     const handleDismiss = () => {
@@ -57,9 +62,7 @@ function MovieList(props) {
     };
 
     const handleEditMovie = (movieId) => {
-        // console.log("edit mode: " + editMode);
         let findMovie = movieList.find((movie) => movie._id === movieId);
-        //console.log(findMovie);
         setImageInput(findMovie.movieImage);
         setTitleInput(findMovie.movieTitle);
         setYearInput(findMovie.releaseYear);
@@ -67,11 +70,9 @@ function MovieList(props) {
         setRatingInput(findMovie.movieRating);
         setEditMode(true);
         setUpdateMovie(findMovie);
-        console.log(findMovie);
-    };
+        };
 
     useEffect(() => {
-        console.log("edit mode: " + editMode);
     }, [editMode]);
 
     const handleUpdateMovie = async ({ id }) => {
@@ -82,6 +83,7 @@ function MovieList(props) {
             releaseYear: yearInput,
             movieGenre: genreInput,
             movieRating: ratingInput,
+            username: username,
         };
         const response = await fetch(url + id, {
             method: "PATCH",
@@ -108,14 +110,13 @@ function MovieList(props) {
             // Add new movie
             if (!editMode) {
                 if (
-                    imageInput.length == 0 ||
-                    titleInput.length == 0 ||
-                    yearInput == 0 ||
-                    genreInput.length == 0 ||
-                    ratingInput == 0
+                    imageInput.length === 0 ||
+                    titleInput.length === 0 ||
+                    yearInput === 0 ||
+                    genreInput.length === 0 ||
+                    ratingInput === 0
                 ) {
                     setError(true);
-                    console.log("error on add: " + error);
                 } else {
                     let newMovie = {
                         movieImage: imageInput,
@@ -123,8 +124,9 @@ function MovieList(props) {
                         releaseYear: yearInput,
                         movieGenre: genreInput,
                         movieRating: ratingInput,
+                        username: username,
                     };
-                    const response = await fetch(url, {
+                    const response = await fetch(url + `user/${username}`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -135,30 +137,24 @@ function MovieList(props) {
                         throw new Error("Failed to add movie");
                     }
                     const data = await response.json();
-                    await fetchMovies();
-                    //console.log(newMovie)
-                    
-
-                    //console.log(movieList)
+                    fetchMovies();
                     setImageInput("");
                     setTitleInput("");
                     setYearInput("");
                     setGenreInput("");
                     setRatingInput("");
                     setError(false);
-                    console.log(newMovie);
                 }
                 // Update movie
             } else {
                 if (
-                    imageInput.length == 0 ||
-                    titleInput.length == 0 ||
-                    yearInput == 0 ||
-                    genreInput.length == 0 ||
-                    ratingInput == 0
+                    imageInput.length === 0 ||
+                    titleInput.length === 0 ||
+                    yearInput === 0 ||
+                    genreInput.length === 0 ||
+                    ratingInput === 0
                 ) {
                     setError(true);
-                    console.log("error on edit: " + error);
                 } else {
                     await handleUpdateMovie({ id: updateMovie._id });
                     setError(false);
@@ -168,7 +164,6 @@ function MovieList(props) {
                     setYearInput("");
                     setGenreInput("");
                     setRatingInput("");
-                    console.log(updateMovie);
                 }
             }
         } catch (error) {
@@ -205,18 +200,33 @@ function MovieList(props) {
         setMovieList(filteredList);
     };
 
-    let allMovies = movieList
-    .map((movie) => {
-        return (
-            <MovieBox
-                key={uuidv4()}
-                id={movie._id}
-                image={movie.movieImage}
-                title={movie.movieTitle}
-                handleMovieBoxClick={handleMovieBoxClick}
-            />
-        );
-    });
+    const allMovies = movieList.map((movie) => (
+        <MovieBox
+            key={uuidv4()}
+            id={movie._id}
+            image={movie.movieImage}
+            title={movie.movieTitle}
+            handleMovieBoxClick={handleMovieBoxClick}
+        />
+    ));
+
+    useEffect(() => {
+        const handleMouseWheel = (e) => {
+            const container = movieListRef.current;
+            container.scrollLeft += e.deltaY;
+        };
+
+        movieListRef.current.addEventListener("wheel", handleMouseWheel);
+
+        return () => {
+            if (movieListRef.current) {
+                movieListRef.current.removeEventListener(
+                    "wheel",
+                    handleMouseWheel
+                );
+            }
+        };
+    }, []);
 
     return (
         <>
@@ -243,9 +253,13 @@ function MovieList(props) {
                 setRatingInput={setRatingInput}
                 error={error}
                 editMode={editMode}
+                movieList={movieList}
             />
 
-            <div className={`mb-3 ${MovieListCSS.movieList}`}>
+            <div
+                className={MovieListCSS.movieList}
+                ref={movieListRef}
+            >
                 <div className={`d-flex ${MovieListCSS.movieSearch}`}>
                     {/* Movie Filter */}
                     <div className="dropdown me-4">
@@ -284,22 +298,6 @@ function MovieList(props) {
                             </li>
                         </ul>
                     </div>
-
-                    {/* Movie Search */}
-                    <form className="d-flex" role="search">
-                        <input
-                            className="form-control me-2"
-                            type="search"
-                            placeholder="Armagedonas"
-                            aria-label="Search"
-                        />
-                        <button
-                            className="btn btn-outline-danger"
-                            type="submit"
-                        >
-                            Ieškoti
-                        </button>
-                    </form>
                 </div>
 
                 {/* Movie List */}
@@ -311,7 +309,12 @@ function MovieList(props) {
                     >
                         +
                     </button>
-                    <div className="d-flex">{allMovies}</div>
+
+                    {movieList.length === 0 ? (
+                        <p className="mb-4 ms-2">Pridėk filmą čia</p>
+                    ) : (
+                        <div className="d-flex">{allMovies}</div>
+                    )}
                 </div>
             </div>
         </>

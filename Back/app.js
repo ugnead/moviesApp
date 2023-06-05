@@ -3,8 +3,9 @@ const cors = require("cors");
 const app = express();
 
 const movieRouter = require("./routes/movieRoutes");
+const userRoutes = require('./routes/userRoutes');
 
-// app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use("/api/v1/movies", movieRouter);
+app.use("/api/v1/movies/", movieRouter);
+app.use('/api/v1/users', userRoutes);
 
 module.exports = app;
