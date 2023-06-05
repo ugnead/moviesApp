@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 
 let movieSchema = new Schema({
+    username: {
+        type: String,
+        ref: "User",
+    },
     movieTitle: {
         type: String,
         minlength: 1,

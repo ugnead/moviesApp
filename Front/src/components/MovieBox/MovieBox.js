@@ -6,7 +6,7 @@ function MovieBox(props) {
 
     const handleClick = () => {
         handleMovieBoxClick(id);
-      };
+    };
 
     return (
         <>

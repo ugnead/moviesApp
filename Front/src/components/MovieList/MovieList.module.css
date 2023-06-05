@@ -1,10 +1,29 @@
 .movieList {
     position: fixed;
     bottom: 0;
-    left: 0;
+    left: 150px;
+    overflow-x: scroll;
+    width: 100%;
+
+  /* Remove scrollbar track */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer and Edge */
+
+  /* Hide scrollbar thumb */
+  &::-webkit-scrollbar {
+    width: 0.8em;
+    background-color: #141414;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #141414;
+  }
 }
 
 .addMovieBtn {
+    position: fixed;
+    bottom: 43px;
+    left: 4px;
     height: 140px;
     width: 140px;
     background-color: #141414;
